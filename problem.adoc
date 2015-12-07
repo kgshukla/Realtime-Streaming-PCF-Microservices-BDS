@@ -7,7 +7,7 @@ http://www.debs2015.org/call-grand-challenge.html
 Stream of taxi data comes in real time for new york region. Region is to be divided into areas, each measuring 300mx300m. Following questions needs to be solved in real time
 
 
-image::problemstmt.jpg[]
+image::images/problemstmt.jpg[]
 
 
 Question 1 - For every 10 seconds, find out the top 10 routes where taxies are plying the most from one area to another area.
@@ -46,7 +46,7 @@ image::images/solution_architecture_1.jpg[]
 
 The below diagram depicts the Microservices based applications. In my earlier solution, I created only one application (monolithic application that was based on php and google charts). I have broken down this application into multiple microservices and use spring cloud services (config-server, service-registry and circuit-breaker) to build a resilient and scalable architecture as shown below.
 
-image::images/solution_architecture_2.jpg[]
+image::images/solution_architecture_2.png[]
 
 As shown in the image above, we have following microservices
 1. EventService - this is a spring boot application that retrieves it's coniguration from config-server (like gemfire host and port to connect to) and exposes few http end points related to events - like how many events (every data in the stream is an event) have been processed, how many events have missing data entries, how much time it takes to process events in a window of 10 second. This service retrieves data from Gemfire.
@@ -253,49 +253,68 @@ You need to have access to Pivotal Cloud Foundry installation that has Spring Cl
 
 Login to Pivotal Cloud Foundry instacne
 
+[source,bash]
+----
 $cf login -a <pivotal cloud foundry api url> --skip-ssl-validation
+----
 
 Choose a valid org and space.
 
 Let's quickly create 3 spring cloud services that we would need. You could go to Pivotal Cloud Foundry web console and create these services as well. We would use command line interface to create quickly. You could also run ./scripts/createservice.sh script.
 
+[source,bash]
+----
 $cf create-service p-config-server standard config-server 
 
 $cf create-service p-service-registry standard service-registry
 
 $cf create-service p-circuit-breaker-dashboard standard circuit-breaker
+----
 
-Wait for 60 seconds to get these services initialized. After that you should go to Pivotal Cloud Foundry Console, choose your org and space and you should be able to see all these services. Click on "Manage" link under config-server. As mentioned in the solution proposition, all microservices gets data from config-server. We use information like gemfire host, gemfire port, database host, database port, database username as part of configuration that will be picked up by microservices after they have been pushed to PCF and bind to config-server (ie during the startup time). I have created my own repository on github - https://github.com/kgshukla/iot-taxi-config-repo which has application.yml file where I provide these details. You need to create your own, update the IP addresses (leave ports and db username, password) in application.yml file and push it to git. IP Address would be the public IP address of your EC2 instance where gemfire and PHD/HAWQ are running.
+Wait for 60 seconds to get these services initialized. After that you should go to Pivotal Cloud Foundry Console, choose your org and space and you should be able to see all these services. Click on "Manage" link under config-server. 
 
-The below screen depicts the git url that you need to update. 
+image:images/service_init.png[]
 
-image::configuration.png[]
+As mentioned in the solution proposition, all microservices gets data from config-server. We use information like gemfire host, gemfire port, database host, database port, database username as part of configuration that will be picked up by microservices after they have been pushed to PCF and bind to config-server (ie during the startup time). I have created my own repository on github - https://github.com/kgshukla/iot-taxi-config-repo which has application.yml file where I provide these details. You need to create your own, update the IP addresses (leave gemfire and db ports, db username, password unchanged) in application.yml file and push it to git. IP Address would be the public IP address of your EC2 instance where gemfire and PHD/HAWQ are running.
 
+The below screen depicts the git url that you need to update. The git url need to be under your own git repository. 
 
-Let's push eventservice now. Before you push open manifest-eventservice.yml file and update the CF_TARGET value with your PCF's API address. Do it for all manifest-*.yml files.
+image::images/configuration.png[]
 
+Let's push eventservice now. Before you push open manifest-eventservice.yml file and update the CF_TARGET value with your PCF's API address (one that you used earlier to login into PCF). Do it for all manifest-*.yml files.
+
+[source,bash]
+----
 $cf push -f manifest-eventservice.yml
+----
 
-Once done, go to Pivotal Cloud Foundry web console, go to org and space and click on "Manage" link under Service Registry. You cshould see EVENTSERVICE-IOT-V1 service getting registered.
+Once done, go to Pivotal Cloud Foundry web console, go to org and space and click on "Manage" link under Service Registry. You cshould see EVENTSERVICE-IOT-V1 service registered as shown below.
+
+image:images/eventservice_registration.png[]
 
 push rest of the microservices (remember to change CF_TARGET value in manifest-*.yml files)
 
+[source,bash]
+----
 $cf push -f manifest-taxiservice.yml
 $cf push -f manifest-analyticservice.yml
 $cf push -f manifest-aggservice.yml
+----
 
 Under Service-Registry you should see all services getting registered. All of them have picked gemfire, database values from config-server and are now up and running. 
 
+image:images/allservices_registration.png[]
 
 Let's push the final web application.
 
-
-$cd webapps_php
-
 Replace <url of aggservice microservice> value appropriately. Do not provide http:// or https://.
-$cf create-user-provided-service agg_service -p '{"AGGSERVICE_URL":"<url of aggservice microservice>"}'
 
+[source,bash]
+----
+$cd webapps_php
+$cf create-user-provided-service agg_service -p '{"AGGSERVICE_URL":"<url of aggservice microservice>"}'
 $cf push
+----
 
 Note down the APP_URL that you get after succesfully pushing the application.
 
@@ -307,9 +326,18 @@ $cat /var/www/html/streamtaxi/sampledata/sorted_data.csv | nc localhost 1234
 
 Access your application at http://<APP_URL> and see that the data is being shown on the website
 
-If you click on "Analytics on HD" button, you would not see any data because we are running sql queries on Hadoop via HAWQ. However, we have not created any stream that puts the data on hadoop. So in next section let's create a tap on existing stream and simultaneously put data on pivotal Hadoop.
+=== Try following use cases
+
+1. You could now scale each microservice independently. Notice on scaling, each instance registers itself to Service-Registry.
+2. Stop one of the microservice, say eventservice, and see the behavior - circuit breaker kicks in and start providing default values. Click on "Manage" link under Circuit-Breaker (in Pivotal Cloud Foundry web console) and see the state of circuit breaker.
+3. Make sure EventService has only 1 instance running. Load this url http://<eventservice url>/load .. This will kill eventservice application. See how PCF brings back the application on its own. Also notice, how circuit breaker kicks in during the microservice failure
+4. Change gemfire ip address in your configuration file and then scale one of the microservice. Notice that it would not be able to startup as it tries to get gemfire IP address from config server during startup. The ones that are already running are not affected.
+5. 
+
 
 === Create hdfs tap stream
+
+If you click on "Analytics on HD" button, you would not see any data because we are running sql queries on Hadoop via HAWQ. However, we have not created any stream that puts the data on hadoop. So in next section let's create a tap on existing stream and simultaneously put data on pivotal Hadoop.
 
 First, you need to start Pivotal Hadoop and HaWQ. Follow this guide to start up hadoop using Ambari Server.
 
@@ -328,10 +356,12 @@ This stream gets a duplicate from our earlier stream and puts it on HDFS.
 
 If you now click on the "Analytics on HD" button, you could see sql queries being run correctly and Google charts are properly shown.
 
-=== Try following use cases
 
-1. You could now scale each microservice independently. Notice on scaling, each instance registers itself to Service-Registry.
-2. Stop one of the microservice, say eventservice, and see the behavior - circuit breaker kicks in and start providing default values. Click on "Manage" link under Circuit-Breaker (in Pivotal Cloud Foundry web console) and see the state of circuit breaker.
-3. Make sure EventService has only 1 instance running. Load this url http://<eventservice url>/load .. This will kill eventservice application. See how PCF brings back the application on its own. Also notice, how circuit breaker kicks in during the microservice failure
-4. Change gemfire ip address in your configuration file and then scale one of the microservice. Notice that it would not be able to startup as it tries to get gemfire IP address from config server during startup. The ones that are already running are not affected.
-5. 
+
+=== Quiz
+
+1. Right now eventservice, taxiservice and analyticservice are also exposed to the entire world. You could go to http://<eventserviceurl>/mappings to see all the exposed urls (one of them is /events/total). You only want aggservice to be available to the outside world. How would you make these three services secure? (HINT - use --no-route option while deploying. But then once you do that, how would these services register their url to service-registry? ;-) )
+
+2. How would you configure your 3 microservices deployment such that any any requests coming from applications other than aggservice microservice should be discarded? (HINT - use space security groups)
+
+3. Think about how would you do version upgrade of eventservice microservice. what all changes you would need to do?
