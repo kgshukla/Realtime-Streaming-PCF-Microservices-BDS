@@ -41,12 +41,12 @@ e. Microservices are modeled as Spring Boot applications. The web application is
 See the below diagram for the stack used. NP stands for network packets so the stream would come as traffic on EC2's network port. SpringXD would be listening to this port.
 
 
-image::solution_architecture_1.jpg[]
+image::images/solution_architecture_1.jpg[]
 
 
 The below diagram depicts the Microservices based applications. In my earlier solution, I created only one application (monolithic application that was based on php and google charts). I have broken down this application into multiple microservices and use spring cloud services (config-server, service-registry and circuit-breaker) to build a resilient and scalable architecture as shown below.
 
-image::solution_architecture_2.jpg[]
+image::images/solution_architecture_2.jpg[]
 
 As shown in the image above, we have following microservices
 1. EventService - this is a spring boot application that retrieves it's coniguration from config-server (like gemfire host and port to connect to) and exposes few http end points related to events - like how many events (every data in the stream is an event) have been processed, how many events have missing data entries, how much time it takes to process events in a window of 10 second. This service retrieves data from Gemfire.
