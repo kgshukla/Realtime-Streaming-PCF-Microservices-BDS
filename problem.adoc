@@ -49,6 +49,7 @@ The below diagram depicts the Microservices based applications. In my earlier so
 image::images/solution_architecture_2.png[]
 
 As shown in the image above, we have following microservices
+
 1. EventService - this is a spring boot application that retrieves it's coniguration from config-server (like gemfire host and port to connect to) and exposes few http end points related to events - like how many events (every data in the stream is an event) have been processed, how many events have missing data entries, how much time it takes to process events in a window of 10 second. This service retrieves data from Gemfire.
 
 2. TaxiService - this is a spring boot application that retrieves it's coniguration from config-server and exposes few http end points related to taxi information - like what are the top 10 routes, where are free taxies available in a window of 10 seconds. This service retrieves data from Gemfire.
@@ -66,7 +67,7 @@ All these will be deployed on Pivotal Cloud Foundry.
 
 In order to make it simpler, we've created the Amazon AMI to launch instances quickly. This AMI contains Pivotal Big Data Suite components needed in the demo - SpringXD, Spark, Pivotal Hadoop, Pivotal HAWQ and Gemfire. There is no .pem requirement to login in to the EC2 instance once AMI is launced.
 
-Log in to your AWS account and search for AMI ID - "ami-b4a7a9e6" (available in Singapore region).
+Log in to your AWS account and search for AMI ID - in Singapore region - ami-7d5c9c1e, US East (N. Virginia) - ami-9d1f51f7 and US West (N. California) - ami-84afc7e4
 
 - Launch it and make sure you choose m4.xlarge (16GB) instance size. Note: You could also try with t2.large (8GB) - we tried it and it works, however you may experience slowness.
 
@@ -148,9 +149,11 @@ TaxiData
 
 Use following command to run SpringXD - Note: the command will not terminate.
 
+[source,bash]
+----
 $ export JAVA_OPTS="-XX:PermSize=512m"
-
 $ $XD_HOME/bin/xd-singlenode
+----
 
 You should wait and see following output and then proceed further
 
@@ -162,9 +165,6 @@ You should wait and see following output and then proceed further
 ----
 
 Start another terminal and run springXD shell command where you will be creating streams
-
-$ $XD_SHELL/bin/xd-shell
-
 
 [source,bash]
 ----
@@ -191,8 +191,6 @@ Note - SpringXD Flo is also running on http://IPAddress:9393/admin-ui  where you
 === Create SpringXD Streams
 
 Go back to the XD Shell command line and run the following command -
-
-xd:>module list
 
 [source,bash]
 ----
@@ -247,7 +245,7 @@ xd:>
 
 Make sure it is deployed correctly by checking that there are no errors in SpringXD single node terminal 
 
-=== Deploy web application in Pivotal Cloud Foundry
+=== Deploy microservices in Pivotal Cloud Foundry
 
 You need to have access to Pivotal Cloud Foundry installation that has Spring Cloud Services enabled. 
 
@@ -307,7 +305,9 @@ image:images/allservices_registration.png[]
 
 Let's push the final web application.
 
-Replace <url of aggservice microservice> value appropriately. Do not provide http:// or https://.
+Replace <url of aggservice microservice> value appropriately. Do not provide http:// or https://. For example, my url while pushing the aggservice microservice was aggservice-iot.cfapps.pez.pivotal.io. So. I will provide following below while creating user provided service
+
+$cf create-user-provided-service agg_service -p '{"AGGSERVICE_URL":"aggservice-iot.cfapps.pez.pivotal.io"}'
 
 [source,bash]
 ----
@@ -329,17 +329,19 @@ Access your application at http://<APP_URL> and see that the data is being shown
 === Try following use cases
 
 1. You could now scale each microservice independently. Notice on scaling, each instance registers itself to Service-Registry.
-2. Stop one of the microservice, say eventservice, and see the behavior - circuit breaker kicks in and start providing default values. Click on "Manage" link under Circuit-Breaker (in Pivotal Cloud Foundry web console) and see the state of circuit breaker.
+2. Stop one of the microservice, say eventservice, and see the behavior - circuit breaker kicks in and start providing default values (ie 0 for total events processed, spark processing time etc). Click on "Manage" link under Circuit-Breaker (in Pivotal Cloud Foundry web console) and see the state of circuit breaker.
+
+image:images/streaming_img1.png
+
 3. Make sure EventService has only 1 instance running. Load this url http://<eventservice url>/load .. This will kill eventservice application. See how PCF brings back the application on its own. Also notice, how circuit breaker kicks in during the microservice failure
-4. Change gemfire ip address in your configuration file and then scale one of the microservice. Notice that it would not be able to startup as it tries to get gemfire IP address from config server during startup. The ones that are already running are not affected.
-5. 
+4. Change gemfire ip address (give arbitrary IP address) in your configuration file (application.yml) and then scale one of the microservice. Notice that it would not be able to startup as it tries to get gemfire IP address from config server during startup. The ones that are already running are not affected.
 
 
 === Create hdfs tap stream
 
 If you click on "Analytics on HD" button, you would not see any data because we are running sql queries on Hadoop via HAWQ. However, we have not created any stream that puts the data on hadoop. So in next section let's create a tap on existing stream and simultaneously put data on pivotal Hadoop.
 
-First, you need to start Pivotal Hadoop and HaWQ. Follow this guide to start up hadoop using Ambari Server.
+First, you need to start Pivotal Hadoop and HaWQ. Follow this link:images/start_phd.pdf[guide] to start up hadoop using Ambari Server.
 
 
 Go back to SpringXD shell prompt and create a new stream that is a TAP from original one. 
