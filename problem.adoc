@@ -44,7 +44,7 @@ See the below diagram for the stack used. NP stands for network packets so the s
 image::images/solution_architecture_1.jpg[]
 
 
-The below diagram depicts the Microservices based applications. In my earlier solution, I created only one application (monolithic application that was based on php and google charts). I have broken down this application into multiple microservices and use spring cloud services (config-server, service-registry and circuit-breaker) to build a resilient and scalable architecture as shown below.
+The below diagram depicts the Microservices based applications. In my earlier link:https://github.com/kgshukla/Realtime-Streaming-PCF-BDS[solution], I created only one application (monolithic application that was based on php and google charts). I have broken down this application into multiple microservices and use spring cloud services (config-server, service-registry and circuit-breaker) to build a resilient and scalable architecture as shown below.
 
 image::images/solution_architecture_2.png[]
 
@@ -247,7 +247,14 @@ Make sure it is deployed correctly by checking that there are no errors in Sprin
 
 === Deploy microservices in Pivotal Cloud Foundry
 
-You need to have access to Pivotal Cloud Foundry installation that has Spring Cloud Services enabled. 
+First you need to clone (git clone) the repository on your laptop. Once done, run mvn clean package (you need to have maven installed on your laptop) inside top directory
+
+[source, bash]
+----
+shuklk2@localhost:Realtime-Streaming-PCF-Microservices-BDS$ mvn clean package
+----
+
+Then, you need to have access to Pivotal Cloud Foundry installation that has Spring Cloud Services enabled. 
 
 Login to Pivotal Cloud Foundry instacne
 
@@ -307,12 +314,12 @@ Let's push the final web application.
 
 Replace <url of aggservice microservice> value appropriately. Do not provide http:// or https://. For example, my url while pushing the aggservice microservice was aggservice-iot.cfapps.pez.pivotal.io. So. I will provide following below while creating user provided service
 
-$cf create-user-provided-service agg_service -p '{"AGGSERVICE_URL":"aggservice-iot.cfapps.pez.pivotal.io"}'
+$cf create-user-provided-service agg_service_iot -p '{"AGGSERVICE_URL":"aggservice-iot.cfapps.pez.pivotal.io"}'
 
 [source,bash]
 ----
 $cd webapps_php
-$cf create-user-provided-service agg_service -p '{"AGGSERVICE_URL":"<url of aggservice microservice>"}'
+$cf create-user-provided-service agg_service_iot -p '{"AGGSERVICE_URL":"<url of aggservice microservice>"}'
 $cf push
 ----
 
@@ -322,7 +329,10 @@ Note down the APP_URL that you get after succesfully pushing the application.
 
 Run the following command on EC2 instance to start streaming data on network port
 
+[source,bash]
+----
 $cat /var/www/html/streamtaxi/sampledata/sorted_data.csv | nc localhost 1234
+----
 
 Access your application at http://<APP_URL> and see that the data is being shown on the website
 
@@ -331,7 +341,7 @@ Access your application at http://<APP_URL> and see that the data is being shown
 1. You could now scale each microservice independently. Notice on scaling, each instance registers itself to Service-Registry.
 2. Stop one of the microservice, say eventservice, and see the behavior - circuit breaker kicks in and start providing default values (ie 0 for total events processed, spark processing time etc). Click on "Manage" link under Circuit-Breaker (in Pivotal Cloud Foundry web console) and see the state of circuit breaker.
 
-image:images/streaming_img1.png
+image:images/streaming_img1.png[]
 
 3. Make sure EventService has only 1 instance running. Load this url http://<eventservice url>/load .. This will kill eventservice application. See how PCF brings back the application on its own. Also notice, how circuit breaker kicks in during the microservice failure
 4. Change gemfire ip address (give arbitrary IP address) in your configuration file (application.yml) and then scale one of the microservice. Notice that it would not be able to startup as it tries to get gemfire IP address from config server during startup. The ones that are already running are not affected.
@@ -367,3 +377,15 @@ If you now click on the "Analytics on HD" button, you could see sql queries bein
 2. How would you configure your 3 microservices deployment such that any any requests coming from applications other than aggservice microservice should be discarded? (HINT - use space security groups)
 
 3. Think about how would you do version upgrade of eventservice microservice. what all changes you would need to do?
+
+
+=== Cleanup your environment
+
+Run scripts/cleanup.sh script to delete all services, applications and routes
+
+[source,bash]
+----
+$sh scripts/cleanup.sh
+----
+
+And don't forget to stop/terminate AWS EC2 instance.

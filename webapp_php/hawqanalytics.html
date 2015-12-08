@@ -1,0 +1,164 @@
+<html>
+  <head>
+   <!-- <meta http-equiv="refresh" content="10" > -->
+    <!--Load the AJAX API-->
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script type="text/javascript">
+    
+    // Load the Visualization API and the piechart package.
+    google.load('visualization', '1', {'packages':['table']});
+    google.load('visualization', '1', {'packages':['corechart']});
+    google.load('visualization', '1', {'packages': ['map']});
+
+      
+    // Set a callback to run when the Google Visualization API is loaded.
+    google.setOnLoadCallback(drawIncorrectDataChart);
+    google.setOnLoadCallback(drawProfitableTaxiDriverChart);
+
+    function drawIncorrectDataChart() {
+      var formData = {type:"INCORRECT_DATA"};
+      var jsonData = $.ajax({
+          url: "getAnalyticData.php",
+          data: formData,
+          type: "POST",
+          dataType:"json",
+          async: false
+          }).responseText;
+         
+      // Create our data table out of JSON data loaded from server.
+      var data = new google.visualization.DataTable(jsonData);
+
+      var options = {
+        width: 800,
+        height: 480,
+        legend: {position: 'top'},
+        title: 'Top 10 Drivers reporting incorrect data'
+      };
+
+      // Instantiate and draw our chart, passing in some options.
+      var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+      chart.draw(data, options);
+    }
+
+    function drawProfitableTaxiDriverChart() {
+      var formData = {type:"TOPTAXID_FARE"};
+      var jsonData2 = $.ajax({
+          url: "getAnalyticData.php",
+          data: formData,
+          type: "POST",
+          dataType:"json",
+          async: false
+          }).responseText;
+         
+      // Create our data table out of JSON data loaded from server.
+      var data2 = new google.visualization.DataTable(jsonData2);
+
+      var options2 = {
+        width: 800,
+        height: 480,
+        legend: {position: 'top'},
+        title: 'Top 10 Profitable Drivers'
+      };
+
+      var chart2 = new google.visualization.ColumnChart(document.getElementById('chart_div2'));
+      chart2.draw(data2, options2);
+    };
+
+
+    </script>
+    <script type="text/javascript" src="jQuery.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+                setInterval(drawProfitableTaxiDriverChart, 30000);
+                setInterval(drawIncorrectDataChart, 30000);
+        });
+    </script>
+
+
+  </head>
+
+  <body>  
+     <table align="left">
+      <tr valign="top">
+        <td style="width: 50%;">
+    	  <img src="/Pivotal-Logo.jpg" style="width:300px;height:100px"/>
+        </td>
+        <td style="width: 50%;">
+  	  <div class="row-fluid">
+           <div class="span12" style="padding: 10px 0px;">
+             <h1>Real Time Streaming Demo</h1>
+           </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+    This demo showcases power of SpringXD (v1.1), Spark Streaming and Gemfire (v8.1).
+    <ul>
+      <li>SpringXD receives a stream of taxi data. Sample data can be viewed <a href="sampledata.html" target="_blank">here</a>.</li>
+      <li>Goal of the demo is to quickly evaluate top 10 busiest area based on taxi pickup and dropoff information received from streams.</li>
+      <li>Each area is a square 1kmx1km.</li>
+      <li>Data needs to be refreshed every 10 seconds.</li>
+      <li>Data is not clean. Drivers could give incorrect information like wrong fare, forgot to enter pickup location, wrong latitude/longitude etc</li>
+    </ul>
+    Below you could see <u>number of streams being processed</u>, <u>top 10 areas and details</u>. <b>ALL IN REAL TIME</b>.
+
+    <!--Div that will hold the charts-->
+<br/>
+    <br/>
+    <br/>
+
+
+    <table>
+      <tr valign="top">
+        <td style="width: 27%;">
+    	  <input type="button" value="Problem Statement" onclick="location.href='/index.html'"/>
+        </td>
+        <td style="width: 20%;">
+    	  <input type="button" value="Events Processing(RT)" onclick="location.href='/taxidata.html'"/>
+        </td>
+        <td style="width: 20%;">
+    	  <input type="button" value="Free Taxies/Top Routes(RT)" onclick="location.href='/freetaxiesandroutes.html'"/>
+        </td>
+        <td style="width: 13%;">
+    	  <input type="button" value="Analytics on HD" onclick="location.href='/hawqanalytics.html'"/>
+        </td>
+      </tr>
+    </table>
+    <br/>
+    <br/>
+    <div id="chart_div"></div>
+    <br/>
+    <pre><b><u>SQL Query is -</u></b>
+     "select medallion, count(medallion) total_count 
+         from taxi_stream.taxi_data_pxf 
+         where pickup_long = 0.000000 or 
+               pickup_lat = 0.000000 or 
+               dropoff_long = 0.000000 or 
+               dropoff_lat = 0.000000 
+         group by medallion 
+         order by total_count desc 
+         limit 10;"
+    </pre> 
+    <br/>
+    <br/>
+    <div id="chart_div2"></div>
+    <br/>
+     <pre><b><u>SQL Query is -</u></b>
+     "select medallion, sum(total_amt) total_fare 
+        from taxi_stream.taxi_data_pxf 
+        group by medallion 
+        order by total_fare desc 
+        limit 10;
+    </pre> 
+    <br/>
+  </body>
+</html>
