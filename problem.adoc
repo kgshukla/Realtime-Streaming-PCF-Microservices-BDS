@@ -247,7 +247,7 @@ Make sure it is deployed correctly by checking that there are no errors in Sprin
 
 === Deploy microservices in Pivotal Cloud Foundry
 
-First you need to clone (git clone) the repository on your laptop. I have uploaded jar files already, so you don't need to compile the code, however, if you want to do some changes and recompile, run mvn clean package (you need to have maven installed on your laptop) inside top directory
+First you need to clone (git clone) the repository on your laptop. Then run "mvn clean package" (you need to have maven installed on your laptop) inside top directory that should create 4 jar files under following folders - eventservice/target, taxiservice/target, analyticservice/target and aggservice/target.
 
 [source, bash]
 ----
