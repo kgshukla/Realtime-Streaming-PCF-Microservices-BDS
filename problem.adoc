@@ -343,7 +343,10 @@ Access your application at http://<APP_URL> and see that the data is being shown
 
 image:images/streaming_img1.png[]
 
-3. Make sure EventService has only 1 instance running. Load this url http://<eventservice url>/load .. This will kill eventservice application. See how PCF brings back the application on its own. Also notice, how circuit breaker kicks in during the microservice failure
+3. Make sure EventService has only 1 instance running. Load this url http://<eventservice url>/load .. This will kill eventservice application. See how PCF brings back the application on its own. Also notice, how circuit breaker kicks in during the microservice failure. As shown below, you would see red circles on circuit breaker dashboard.
+
+image:images/circuit_breaker.png[]
+
 4. Change gemfire ip address (give arbitrary IP address) in your configuration file (application.yml) and then scale one of the microservice. Notice that it would not be able to startup as it tries to get gemfire IP address from config server during startup. The ones that are already running are not affected.
 
 
@@ -370,7 +373,7 @@ If you now click on the "Analytics on HD" button, you could see sql queries bein
 
 
 
-=== Quiz
+=== Further Exercises
 
 1. Right now eventservice, taxiservice and analyticservice are also exposed to the entire world. You could go to http://<eventserviceurl>/mappings to see all the exposed urls (one of them is /events/total). You only want aggservice to be available to the outside world. How would you make these three services secure? (HINT - use --no-route option while deploying. But then once you do that, how would these services register their url to service-registry? ;-) )
 
