@@ -67,7 +67,7 @@ All these will be deployed on Pivotal Cloud Foundry.
 
 In order to make it simpler, we've created the Amazon AMI to launch instances quickly. This AMI contains Pivotal Big Data Suite components needed in the demo - SpringXD, Spark, Pivotal Hadoop, Pivotal HAWQ and Gemfire. There is no .pem requirement to login in to the EC2 instance once AMI is launced.
 
-Log in to your AWS account and search for AMI ID - in Singapore region - ami-7d5c9c1e, US East (N. Virginia) - ami-9d1f51f7 and US West (N. California) - ami-84afc7e4
+Log in to your AWS account and search for "Name" attribute with value "PCF Microservice" (available in Singapore region - ami-7d5c9c1e, US East (N. Virginia) - ami-9d1f51f7 and US West (N. California) - ami-84afc7e4)
 
 - Launch it and make sure you choose m4.xlarge (16GB) instance size. Note: You could also try with t2.large (8GB) - we tried it and it works, however you may experience slowness.
 
@@ -247,7 +247,7 @@ Make sure it is deployed correctly by checking that there are no errors in Sprin
 
 === Deploy microservices in Pivotal Cloud Foundry
 
-First you need to clone (git clone) the repository on your laptop. Once done, run mvn clean package (you need to have maven installed on your laptop) inside top directory
+First you need to clone (git clone) the repository on your laptop. I have uploaded jar files already, so you don't need to compile the code, however, if you want to do some changes and recompile, run mvn clean package (you need to have maven installed on your laptop) inside top directory
 
 [source, bash]
 ----

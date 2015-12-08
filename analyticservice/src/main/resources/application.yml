@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: analyticservice-iot-v1
+
+  jpa:
+    database: POSTGRESQL
+  datasource:
+    url: ${db_url}
+    username: ${db_username}
+    password: ${db_password}
+
+security:
+  basic:
+    enabled: false
+
+management:
+  security:
+    enabled: false
+
+---
+
+spring:
+  profiles: pcf
+
+---
+
+spring:
+  profiles: pws
+
+  jpa:
+    database: POSTGRESQL
+  datasource:
+    url: ${db_url}
+    username: ${db_username}
+    password: ${db_password}
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${vcap.services.service-registry.credentials.uri:http://127.0.0.1:8761}/eureka/
+  instance:
+    hostname: ${vcap.application.uris[0]}
+    nonSecurePort: 80
+    metadataMap:
+      instanceId: ${vcap.application.instance_id:${spring.application.name}:${server.port:8080}}
+

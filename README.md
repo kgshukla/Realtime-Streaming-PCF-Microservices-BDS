@@ -17,4 +17,5 @@ We use Pivotal Stack to solve the problem. Particularly, following products are 
 
 Apps are built using Microservices pattern and utilizes Spring Cloud Suite (config server, service registry and circuit breaker) for a resilient, scale out architecture.
 
-Click link:problem.adoc[here] to get started.
+Click problem.adoc to get started.
+

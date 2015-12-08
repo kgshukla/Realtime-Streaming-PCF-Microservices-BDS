@@ -42,8 +42,8 @@ if (isset($_POST["type"])) {
 	     	
 		$table1 = array();
 		$table1['cols'] = array(
-				array('id' => "", 'label' => '#Streams Processed', 'pattern' => "", 'type' => 'string'),
-				array('id' => "", 'label' => '#Streams Lacking Data', 'pattern' => "", 'type' => 'string'),
+				array('id' => "", 'label' => '#Events Processed', 'pattern' => "", 'type' => 'string'),
+				array('id' => "", 'label' => '#Events Lacking Data', 'pattern' => "", 'type' => 'string'),
 				array('id' => "", 'label' => 'Per Batch Spark Processing Time (ms)', 'pattern' => "", 'type' => 'string'),
 				);
 
@@ -71,8 +71,8 @@ if (isset($_POST["type"])) {
                 $table1 = array();
                 $table1['cols'] = array(
                                 array('id' => "", 'label' => 'Time', 'pattern' => "", 'type' => 'string'),
-                                array('id' => "", 'label' => '#Streams Processed', 'pattern' => "", 'type' => 'number'),
-                                array('id' => "", 'label' => '#Streams Lacking Data', 'pattern' => "", 'type' => 'number')
+                                array('id' => "", 'label' => '#Events Processed', 'pattern' => "", 'type' => 'number'),
+                                array('id' => "", 'label' => '#Events Lacking Data', 'pattern' => "", 'type' => 'number')
                                 );
 
                 $rows1 = array();
