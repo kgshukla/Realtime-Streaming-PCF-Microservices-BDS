@@ -18,11 +18,6 @@ management:
 spring:
   profiles: pcf
 
----
-
-spring:
-  profiles: pws
-
 eureka:
   client:
     serviceUrl:
