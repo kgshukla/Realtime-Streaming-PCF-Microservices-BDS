@@ -15,15 +15,10 @@ management:
 spring:
   profiles: pcf
 
----
-
-spring:
-  profiles: pws
-
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${vcap.services.service-registry-iot.credentials.uri:http://127.0.0.1:8761}/eureka/
+      defaultZone: ${vcap.services.service-registry.credentials.uri:http://127.0.0.1:8761}/eureka/
   instance:
     hostname: ${vcap.application.uris[0]}
     nonSecurePort: 80
