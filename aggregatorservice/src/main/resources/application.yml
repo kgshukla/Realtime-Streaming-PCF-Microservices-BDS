@@ -10,6 +10,10 @@ management:
   security:
     enabled: false
 
+ribbon:
+  ReadTimeout: 50000
+  ConnectTimeout: 3000
+
 ---
 
 spring:
